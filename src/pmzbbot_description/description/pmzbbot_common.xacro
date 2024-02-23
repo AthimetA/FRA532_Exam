@@ -42,17 +42,24 @@
     </inertial>
     </xacro:macro>
 
-  <xacro:macro name="zhbbot_common">
+  <xacro:macro name="pmzbbot_common">
     <!-- Mobile Robot Parameter -->
     <xacro:property name="wheel_radius" value="0.034" scope="parent"/>
     <xacro:property name="wheel_thickness" value="0.025" scope="parent"/>
     <xacro:property name="wheel_mass" value="0.029" scope="parent"/>
     <xacro:property name="wheel_offset_y" value="0.0805" scope="parent"/>
 
+    <xacro:property name="casterwheel_mass" value="0.042" scope="parent"/>
+    <xacro:property name="casterwheel_radius" value="0.018" scope="parent"/>
+    <xacro:property name="casterwheel_offset_x" value="0.097" scope="parent"/>
+    <xacro:property name="casterwheel_offset_z" value="0.016" scope="parent"/>
+
+
     <xacro:property name="chassis_length" value="0.15" scope="parent"/>
-    <xacro:property name="chassis_width" value="0.161" scope="parent"/>
+    <xacro:property name="chassis_width" value="0.136" scope="parent"/>
     <xacro:property name="chassis_height" value="0.0915" scope="parent"/>
     <xacro:property name="chassis_offset_x" value="0.027" scope="parent"/>
+    <xacro:property name="chassis_offset_z" value="0.016" scope="parent"/>
 
     <xacro:property name="battery_mass" value="0.207" scope="parent"/>
     <xacro:property name="leftmotor_mass" value="0.057" scope="parent"/>
@@ -60,9 +67,9 @@
     <xacro:property name="esp32_mass" value="0.48" scope="parent"/>
     <xacro:property name="imu_mass" value="0.040" scope="parent"/>
     <xacro:property name="base_mass" value="0.094" scope="parent"/>
-    <xacro:property name="casterwheel_mass" value="0.055" scope="parent"/>
     <xacro:property name="other_mass" value="0.055" scope="parent"/>
-    <xacro:property name="chassis_mass" value="${battery_mass + leftmotor_mass + rightmotor_mass + esp32_mass + imu_mass + base_mass + casterwheel_mass + other_mass}" scope="parent"/>
+    <xacro:property name="caster3d_mass" value="0.012" scope="parent"/>
+    <xacro:property name="chassis_mass" value="${battery_mass + leftmotor_mass + rightmotor_mass + esp32_mass + imu_mass + base_mass + other_mass + caster3d_mass}" scope="parent"/>
 
 
   </xacro:macro>
