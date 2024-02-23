@@ -50,8 +50,7 @@ void loop()
     // Motor.turnWheel(1, LEFT, 10);
     // Motor.turnWheel(2, RIGHT, 10);
     Serial.println(count_left);
-    Serial.println(' ');
-    Serial.println(count_right);
+    // Serial.println(count_right);
 
   }
 }

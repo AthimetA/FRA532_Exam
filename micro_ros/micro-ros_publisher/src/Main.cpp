@@ -7,9 +7,6 @@
 
 // #include <std_msgs/msg/int32.h>
 
-// // #if !defined(MICRO_ROS_TRANSPORT_ARDUINO_SERIAL)
-// // #error This example is only avaliable for Arduino framework with serial transport.
-// // #endif
 
 // rcl_publisher_t publisher;
 // std_msgs__msg__Int32 msg;
@@ -41,16 +38,17 @@
 // void setup() {
 //   // Configure serial transport
 //   Serial.begin(115200);
-//   // set_microros_serial_transports(Serial);
-
-//   IPAddress agent_ip(192,168,213,254);
+//   IPAddress agent_ip(192,168,213,254); // Mobile Hotspot
+//   // IPAddress agent_ip(192,168,1,8); // Home Wifi
 //   size_t agent_port = 8888;
 
 //   char ssid[] = "X2";
 //   char password[] = "qwertyuiop";
+//   // char ssid[] = "AAPA-2.4G";
+//   // char password[] = "Athpun4062";
+
 //   Serial.println("Connecting to WiFi and Initialize micro-ROS...");
 //   set_microros_wifi_transports(ssid,password,agent_ip,agent_port);
-
 //   delay(2000);
 
 //   allocator = rcl_get_default_allocator();
