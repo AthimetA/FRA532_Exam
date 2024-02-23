@@ -52,15 +52,10 @@
         <!--link-->
         <link name="chassis">
         <visual>
-            <!-- <origin xyz="${chassis_length/2} 0 ${chassis_height/2}"/> -->
-            <origin xyz="${chassis_length/2} 0 -0.10"/>
-            <!-- <geometry>
-                <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
-            </geometry> -->
+            <origin xyz="${chassis_length/2} 0 ${chassis_height/2}"/>
             <geometry>
-                <mesh filename="file://$(find zhbbot_description)/meshes/mir_100_base.stl"/>
+                <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
             </geometry>
-            <material name="grey"/>
         </visual>
         <collision>
             <!-- <origin xyz="${chassis_length/2} 0 ${chassis_height/2}"/> -->
