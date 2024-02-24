@@ -17,5 +17,12 @@
         "/opt/ros/humble/lib/python3.10/site-packages",
         "/opt/ros/humble/local/lib/python3.10/dist-packages"
     ],
-    "cmake.sourceDirectory": "/home/athimet/FRA532_Exam/micro_ros/micro-ros_publisher/.pio/libdeps/espino32/micro_ros_platformio/ci/extra_packages/my_custom_message"
+    "cmake.sourceDirectory": "/home/athimet/FRA532_Exam/micro_ros/micro-ros_publisher/.pio/libdeps/espino32/micro_ros_platformio/ci/extra_packages/my_custom_message",
+    "files.associations": {
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "utility": "cpp"
+    }
 }
