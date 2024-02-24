@@ -6,7 +6,7 @@
         "limitSymbolsToIncludedHeaders": false
       },
       "includePath": [
-        "/home/athimet/FRA532_Mobile_Robot/zhbbot/install/zhbbot_interfaces/include/**",
+        "/home/athimet/FRA532_Mobile_Robot/pmzbbot/install/pmzbbot_interfaces/include/**",
         "/opt/ros/humble/include/**",
         "/home/athimet/FRA532_Exam/src/uros/micro-ROS-Agent/micro_ros_agent/include/**",
         "/usr/include/**"
