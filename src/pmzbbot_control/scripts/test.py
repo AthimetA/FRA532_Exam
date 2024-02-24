@@ -18,7 +18,7 @@ class pmzbbotTestNode(Node):
         super().__init__(node_name='pmzbbotTestNode')
 
         # Create a publisher to publish the velocity commands
-        self.cmd_pub = self.create_publisher(Twist, '/pmz_cmd_vel', 10)
+        self.cmd_pub = self.create_publisher(Twist, '/pmzb_cmd_vel', 10)
         self.cmd_timer = self.create_timer(0.1, self.cmd_timer_callback)
         self.cmd_vel = Twist()
 
@@ -30,21 +30,21 @@ class pmzbbotTestNode(Node):
         self.imu_sub = self.create_subscription(Imu, '/pmzb_imu', self.imu_callback, 10)
         self.imu_buffer = Imu()
 
-    def wheel_vel_callback(self, msg):
+    def wheel_vel_callback(self, msg: Twist):
         self.wheel_vel_buffer = msg
-        self.left_wheel_vel = msg.linear.x
-        self.right_wheel_vel = msg.linear.y
+        self.left_wheel_vel = msg.angular.x
+        self.right_wheel_vel = msg.angular.y
         self.get_logger().info(f'Received wheel velocity data: {self.left_wheel_vel}, {self.right_wheel_vel}')
 
     def imu_callback(self, msg):
         self.imu_buffer = msg
-        self.get_logger().info(f'Received IMU data: {self.imu_buffer}')
+        # self.get_logger().info(f'Received IMU data: ax={self.imu_buffer.linear_acceleration.x}, ay={self.imu_buffer.linear_acceleration.y}, az={self.imu_buffer.linear_acceleration.z}, gx={self.imu_buffer.angular_velocity.x}, gy={self.imu_buffer.angular_velocity.y}, gz={self.imu_buffer.angular_velocity.z}')
+        # self.get_logger().info(f'Received IMU data: {self.imu_buffer}')
 
     def cmd_timer_callback(self):
-        self.cmd_vel.angular.x = self.left_wheel_vel
-        self.cmd_vel.angular.y = self.right_wheel_vel
+        self.cmd_vel.linear.x = 0.0
+        self.cmd_vel.angular.y = 0.0
         self.cmd_pub.publish(self.cmd_vel)
-        self.get_logger().info(f'Published velocity command: {self.cmd_vel}')
         
 
 

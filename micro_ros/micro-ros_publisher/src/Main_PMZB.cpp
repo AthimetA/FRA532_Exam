@@ -19,11 +19,16 @@
 
 // ----------------- Global variables -----------------
 // Ros2
-rclc_executor_t executor; // Executor for micro-ROS
+rclc_executor_t executor_pub; // Executor for publisher
+rclc_executor_t executor_sub; // Executor for subscriber
 rclc_support_t support; // Support for micro-ROS
 rcl_allocator_t allocator; // Allocator for micro-ROS
 rcl_node_t node; // Node for micro-ROS
 rcl_timer_t timer; // Timer for control loop
+
+// CMD_VEL Subscriber
+rcl_subscription_t cmd_vel_sub;
+geometry_msgs__msg__Twist cmd_vel_msg;
 
 // Motor Publisher
 rcl_publisher_t wheel_velocity_publisher; // Publisher for wheel velocity
@@ -57,12 +62,13 @@ long main_loop_counter_ms = 0;
 
 // ----------------- Function declarations -----------------
 void timer_callback(rcl_timer_t * timer, int64_t last_call_time);
-void error_loop();
 void readDynamixelWheel(float &wheel_left_data, float &wheel_right_data);
 void readIMU(float &ax, float &ay, float &az, float &gx, float &gy, float &gz);
+void cmd_vel_callback(const void * msgin);
 
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){error_loop();}}
-#define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
+
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc);vTaskDelete(NULL);}}
+#define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Continuing.\n",__LINE__,(int)temp_rc);}}
 
 // ----------------- Main code -----------------
 
@@ -129,11 +135,20 @@ void setup() {
       RCL_MS_TO_NS(timer_timeout),
       timer_callback));
 
-    // Executor initialization
-    RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
-    RCCHECK(rclc_executor_add_timer(&executor, &timer));
+    // Subscriber initialization
+    RCCHECK(rclc_subscription_init_default(
+      &cmd_vel_sub,
+      &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
+      DYNAMIXEL_CMD_VEL_TOPIC_NAME));
 
-    RCSOFTCHECK(rclc_executor_spin(&executor));
+    // Executor initialization
+    RCCHECK(rclc_executor_init(&executor_pub, &support.context, 1, &allocator));
+    RCCHECK(rclc_executor_add_timer(&executor_pub, &timer));
+    RCCHECK(rclc_executor_init(&executor_sub, &support.context, 1, &allocator));
+    RCCHECK(rclc_executor_add_subscription(&executor_sub,&cmd_vel_sub,&cmd_vel_msg,&cmd_vel_callback, ON_NEW_DATA));
+
+    Serial.println("Micro-ROS PMZB node has been initialized");
 
 }
 
@@ -141,6 +156,9 @@ void loop() {
     // spin up the executor
 
     if (millis() - main_loop_counter_ms >= 50) {
+        // Serial.println("Main loop");
+        RCSOFTCHECK(rclc_executor_spin_some(&executor_pub, RCL_MS_TO_NS(50)));
+        RCSOFTCHECK(rclc_executor_spin_some(&executor_sub, RCL_MS_TO_NS(50)));
         main_loop_counter_ms = millis();
     }
     
@@ -149,14 +167,6 @@ void loop() {
 // ----------------- End of main code -----------------
 
 // ----------------- Function definitions -----------------
-
-
-// Error handle loop
-void error_loop() {
-  while(1) {
-    delay(100);
-  }
-}
 
 // Timer callback
 void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
@@ -190,6 +200,8 @@ void readDynamixelWheel(float &wheel_left_data, float &wheel_right_data) {
     dynamixel_wheel_left_raw = Motor.readSpeed(DYNAMIXEL_MOTOR_LEFT_ID);
     dynamixel_wheel_right_raw = Motor.readSpeed(DYNAMIXEL_MOTOR_RIGHT_ID);
 
+    // Serial.println("Left: " + String(dynamixel_wheel_left_raw) + " Right: " + String(dynamixel_wheel_right_raw));
+
     if (dynamixel_wheel_left_raw > 1023) {
         wheel_left_data = (dynamixel_wheel_left_raw - 1024) * -1;
     } else {
@@ -207,8 +219,8 @@ void readDynamixelWheel(float &wheel_left_data, float &wheel_right_data) {
     wheel_right_data = wheel_right_data * DYNAMIXEL_BIT_2_RPM;
 
     //   Convert RPM to rad/s
-    wheel_left_data = wheel_left_data * RPM2RAD;
-    wheel_right_data = wheel_right_data * RPM2RAD;
+    // wheel_left_data = wheel_left_data * RPM2RAD;
+    // wheel_right_data = wheel_right_data * RPM2RAD;
 }
 
 // Read IMU data
@@ -234,5 +246,43 @@ void readIMU(float &ax, float &ay, float &az, float &gx, float &gy, float &gz) {
         gy = gy * DEG2RAD;
         gz = gz * DEG2RAD;
 
+    }
+}
+
+// CMD_VEL callback
+void cmd_vel_callback(const void * msgin) {
+    const geometry_msgs__msg__Twist * msg = (const geometry_msgs__msg__Twist *)msgin;
+    float robot_linear_velocity = msg->linear.x;
+    float robot_angular_velocity = msg->angular.z;
+
+    // Serial.println("Robot linear velocity: " + String(robot_linear_velocity) + " m/s"+ " Robot angular velocity: " + String(robot_angular_velocity) + " rad/s");
+
+    // Convert robot velocity to wheel velocity
+    float left_wheel_velocity = (robot_linear_velocity/ROBOT_WHEEL_RADIUS) - (robot_angular_velocity * ROBOT_BASE_WIDTH / (2*ROBOT_WHEEL_RADIUS));
+    float right_wheel_velocity = (robot_linear_velocity/ROBOT_WHEEL_RADIUS) + (robot_angular_velocity * ROBOT_BASE_WIDTH / (2*ROBOT_WHEEL_RADIUS));
+    
+    // Convert wheel velocity to RPM
+    float left_wheel_rpm = left_wheel_velocity * RAD2RPM;
+    float right_wheel_rpm = right_wheel_velocity * RAD2RPM;
+
+    Serial.println("Left wheel RPM: " + String(left_wheel_rpm) + " Right wheel RPM: " + String(right_wheel_rpm));
+
+    // Cap the wheel velocity
+    if (left_wheel_rpm > 60) {
+        left_wheel_rpm = 60;
+    } else if (left_wheel_rpm < -60) {
+        left_wheel_rpm = -60;
+    }
+
+    if (left_wheel_rpm < 0) {
+        Motor.turnWheel(DYNAMIXEL_MOTOR_LEFT_ID, RIGHT, abs(left_wheel_rpm));
+    } else {
+        Motor.turnWheel(DYNAMIXEL_MOTOR_LEFT_ID, LEFT, left_wheel_rpm);
+    }
+
+    if (right_wheel_rpm < 0) {
+        Motor.turnWheel(DYNAMIXEL_MOTOR_RIGHT_ID, LEFT, abs(right_wheel_rpm));
+    } else {
+        Motor.turnWheel(DYNAMIXEL_MOTOR_RIGHT_ID, RIGHT, right_wheel_rpm);
     }
 }
