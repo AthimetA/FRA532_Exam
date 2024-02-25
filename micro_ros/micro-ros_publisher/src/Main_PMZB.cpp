@@ -218,9 +218,9 @@ void readDynamixelWheel(float &wheel_left_data, float &wheel_right_data) {
     wheel_left_data = wheel_left_data * DYNAMIXEL_BIT_2_RPM;
     wheel_right_data = wheel_right_data * DYNAMIXEL_BIT_2_RPM;
 
-    //   Convert RPM to rad/s
-    // wheel_left_data = wheel_left_data * RPM2RAD;
-    // wheel_right_data = wheel_right_data * RPM2RAD;
+    // Convert RPM to rad/s
+    wheel_left_data = wheel_left_data * RPM2RAD;
+    wheel_right_data = wheel_right_data * RPM2RAD;
 }
 
 // Read IMU data
@@ -268,10 +268,10 @@ void cmd_vel_callback(const void * msgin) {
     Serial.println("Left wheel RPM: " + String(left_wheel_rpm) + " Right wheel RPM: " + String(right_wheel_rpm));
 
     // Cap the wheel velocity
-    if (left_wheel_rpm > 60) {
-        left_wheel_rpm = 60;
-    } else if (left_wheel_rpm < -60) {
-        left_wheel_rpm = -60;
+    if (left_wheel_rpm > DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP) {
+        left_wheel_rpm = DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP;
+    } else if (left_wheel_rpm < -DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP) {
+        left_wheel_rpm = -DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP;
     }
 
     if (left_wheel_rpm < 0) {

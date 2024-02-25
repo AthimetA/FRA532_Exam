@@ -42,8 +42,8 @@ class pmzbbotTestNode(Node):
         # self.get_logger().info(f'Received IMU data: {self.imu_buffer}')
 
     def cmd_timer_callback(self):
-        self.cmd_vel.linear.x = 0.0
-        self.cmd_vel.angular.y = 0.0
+        self.cmd_vel.linear.x = 0.25
+        self.cmd_vel.angular.y = 0.8
         self.cmd_pub.publish(self.cmd_vel)
         
 
