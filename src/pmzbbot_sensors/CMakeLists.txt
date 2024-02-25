@@ -29,6 +29,7 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   # Control
   scripts/pmzb_calibration_sensor.py
+  scripts/pmzb_ros_bridge.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

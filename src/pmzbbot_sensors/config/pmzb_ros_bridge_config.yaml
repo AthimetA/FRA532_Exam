@@ -1,0 +1,12 @@
+IMU_SUB_TOPIC_NAME: "/pmzb_imu"
+IMU_PUB_TOPIC_NAME: "/pmzb/imu"
+IMU_FRAME_ID: "imu_link"
+IMU_CALIBRATION_FILE_NAME: "imu_calibration.yaml"
+WHEEL_VELOCITY_SUB_TOPIC_NAME: "/pmzb_wheel_vel"
+WHEEL_ODOMETRY_PUB_TOPIC_NAME: "/pmzb/wheel_odom"
+NODE_NAME: "pmzb_ros_bridge"
+NODE_TIMER_HZ: 10
+WHEEL_RADIUS: 0.034
+BASE_WIDTH: 0.161
+ODOM_FRAME_ID: "odom"
+BASE_FRAME_ID: "base_link"

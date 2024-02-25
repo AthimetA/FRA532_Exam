@@ -83,7 +83,11 @@
                 <origin xyz="0 0 0" rpy="0 0 0"/>
             </xacro:inertial_cylinder>
         </link>
-        
+
+        <gazebo reference="left_wheel">
+            <material>Gazebo/Black</material>
+        </gazebo>
+
         <!-- RIGHT WHEEL -->
 
         <joint name="right_wheel_joint" type="continuous">
@@ -110,6 +114,10 @@
         </xacro:inertial_cylinder>
         </link>
 
+        <gazebo reference="right_wheel">
+            <material>Gazebo/Black</material>
+        </gazebo>
+
         <!-- CASTER WHEEL FONT RIGHT -->
 
         <joint name="caster_wheel_joint" type="fixed">
@@ -134,6 +142,31 @@
                 <origin xyz="0 0 0" rpy="0 0 0"/>
             </xacro:inertial_sphere>
         </link>
+
+        <gazebo reference="caster_wheel">
+            <material>Gazebo/Blue</material>
+            <mu1 value="0.001"/>
+            <mu2 value="0.001"/>
+        </gazebo>
+
+        <!-- Ground truth pose -->
+        <gazebo>
+            <plugin name="groud_truth_pose" filename="libgazebo_ros_p3d.so">
+                <always_on>true</always_on>
+                <update_rate>50.0</update_rate>
+                <body_name>base_footprint</body_name>
+                <topic_name>odom</topic_name>
+                <gaussian_noise>0.00</gaussian_noise>
+                <frame_name>world</frame_name>
+                <tf_frame_name>world</tf_frame_name>
+                <tf_prefix>odom_groud_truth_pose</tf_prefix>
+                <xyz_offset>0 0 0</xyz_offset>
+                <rpy_offset>0 0 0</rpy_offset>
+                <ros>
+                    <remapping>/odom:=odom_groud_truth_pose</remapping>
+                </ros>
+            </plugin>
+        </gazebo>
 
     </xacro:macro>
 
