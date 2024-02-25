@@ -1,7 +1,7 @@
-IMU_TOPIC_NAME: "/imu/data"
+IMU_TOPIC_NAME: "/pmzb_imu"
 IMU_CALIBRATION_RESULT_FILE: "imu_calibration_result.yaml"
-WHEEL_VELOCITY_TOPIC_NAME: "/wheel_velocity"
+WHEEL_VELOCITY_TOPIC_NAME: "/pmzb_wheel_vel"
 WHEEL_VELOCITY_CALIBRATION_RESULT_FILE: "wheel_velocity_calibration_result.yaml"
-MAX_CALIBRATION_ITERATIONS: 5000
+MAX_CALIBRATION_ITERATIONS: 1000
 NODE_TIMER_HZ: 10
 NODE_CALIBRATION_SERVICE_NAME: "pmzbbot_begin_calibration"

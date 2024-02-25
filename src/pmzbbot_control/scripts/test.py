@@ -44,7 +44,7 @@ class pmzbbotTestNode(Node):
         # self.get_logger().info(f'Received IMU data: {self.imu_buffer}')
 
     def cmd_timer_callback(self):
-        mode = 2
+        mode = 3
         if mode == 1:
             if self.loop_counter < 4:
                 self.timer_counter += 1
@@ -74,6 +74,11 @@ class pmzbbotTestNode(Node):
                 self.cmd_vel.linear.x = 0.0
                 self.cmd_vel.angular.z = 0.0
                 self.cmd_pub.publish(self.cmd_vel)
+
+        elif mode ==3:
+            self.cmd_vel.linear.x = 0.0
+            self.cmd_vel.angular.z = 0.0
+            self.cmd_pub.publish(self.cmd_vel)
 
 
 

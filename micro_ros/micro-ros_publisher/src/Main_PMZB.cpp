@@ -265,6 +265,9 @@ void cmd_vel_callback(const void * msgin) {
     float left_wheel_rpm = left_wheel_velocity * RAD2RPM;
     float right_wheel_rpm = right_wheel_velocity * RAD2RPM;
 
+    // float left_wheel_rpm = msg->linear.x;
+    // float right_wheel_rpm = msg->angular.z;
+
     Serial.println("Left wheel RPM: " + String(left_wheel_rpm) + " Right wheel RPM: " + String(right_wheel_rpm));
 
     // Cap the wheel velocity
