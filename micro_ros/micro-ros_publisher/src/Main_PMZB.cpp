@@ -190,7 +190,7 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
     readDynamixelWheel(wheel_left_data, wheel_right_data);
     // Publish wheel velocity
     wheel_velocity_msg.angular.x = wheel_left_data;
-    wheel_velocity_msg.angular.y = wheel_right_data;
+    wheel_velocity_msg.angular.z = wheel_right_data;
     RCSOFTCHECK(rcl_publish(&wheel_velocity_publisher, &wheel_velocity_msg, NULL));
 
 }
@@ -255,7 +255,7 @@ void cmd_vel_callback(const void * msgin) {
     float robot_linear_velocity = msg->linear.x;
     float robot_angular_velocity = msg->angular.z;
 
-    // Serial.println("Robot linear velocity: " + String(robot_linear_velocity) + " m/s"+ " Robot angular velocity: " + String(robot_angular_velocity) + " rad/s");
+    Serial.println("Robot linear velocity: " + String(robot_linear_velocity) + " m/s"+ " Robot angular velocity: " + String(robot_angular_velocity) + " rad/s");
 
     // Convert robot velocity to wheel velocity
     float left_wheel_velocity = (robot_linear_velocity/ROBOT_WHEEL_RADIUS) - (robot_angular_velocity * ROBOT_BASE_WIDTH / (2*ROBOT_WHEEL_RADIUS));

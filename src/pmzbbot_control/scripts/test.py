@@ -19,8 +19,10 @@ class pmzbbotTestNode(Node):
 
         # Create a publisher to publish the velocity commands
         self.cmd_pub = self.create_publisher(Twist, '/pmzb_cmd_vel', 10)
-        self.cmd_timer = self.create_timer(0.1, self.cmd_timer_callback)
+        self.cmd_timer = self.create_timer(0.05, self.cmd_timer_callback)
         self.cmd_vel = Twist()
+        self.timer_counter = 0
+        self.loop_counter = 0
 
         self.wheel_vel_sub = self.create_subscription(Twist, '/pmzb_wheel_vel', self.wheel_vel_callback, 10)
         self.wheel_vel_buffer = Twist()
@@ -33,7 +35,7 @@ class pmzbbotTestNode(Node):
     def wheel_vel_callback(self, msg: Twist):
         self.wheel_vel_buffer = msg
         self.left_wheel_vel = msg.angular.x
-        self.right_wheel_vel = msg.angular.y
+        self.right_wheel_vel = msg.angular.z
         self.get_logger().info(f'Received wheel velocity data: {self.left_wheel_vel}, {self.right_wheel_vel}')
 
     def imu_callback(self, msg):
@@ -42,10 +44,39 @@ class pmzbbotTestNode(Node):
         # self.get_logger().info(f'Received IMU data: {self.imu_buffer}')
 
     def cmd_timer_callback(self):
-        self.cmd_vel.linear.x = 0.25
-        self.cmd_vel.angular.y = 0.8
-        self.cmd_pub.publish(self.cmd_vel)
-        
+        mode = 2
+        if mode == 1:
+            if self.loop_counter < 4:
+                self.timer_counter += 1
+                if self.timer_counter <= 10/0.05:
+                    self.cmd_vel.linear.x = 0.2
+                    self.cmd_vel.angular.z = 0.0
+                    self.cmd_pub.publish(self.cmd_vel)
+                elif 50 < self.timer_counter <= 80:
+                    self.cmd_vel.linear.x = 0.0
+                    self.cmd_vel.angular.z = -(2*np.pi/4)/3
+                    self.cmd_pub.publish(self.cmd_vel)
+                else:
+                    self.loop_counter += 1
+                    self.timer_counter = 0
+            else:
+                self.cmd_vel.linear.x = 0.0
+                self.cmd_vel.angular.z = 0.0
+                self.cmd_pub.publish(self.cmd_vel)
+
+        elif mode == 2:
+            self.timer_counter += 1
+            if self.timer_counter <= 3/0.05:
+                self.cmd_vel.linear.x = 0.0
+                self.cmd_vel.angular.z = (2*np.pi/4)/3
+                self.cmd_pub.publish(self.cmd_vel)
+            else:
+                self.cmd_vel.linear.x = 0.0
+                self.cmd_vel.angular.z = 0.0
+                self.cmd_pub.publish(self.cmd_vel)
+
+
+
 
 
 # Main function to initialize and run the ROS 2 node

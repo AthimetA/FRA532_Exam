@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/duplicix/FRA532_Exam/install/micro_ros_agent/include/**",
+        "/home/duplicix/FRA532_Exam/install/micro_ros_msgs/include/**",
+        "/home/duplicix/FRA532_Mobile_Robot/zhbbot/install/zhbbot_interfaces/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/duplicix/FRA532_Exam/src/uros/micro-ROS-Agent/micro_ros_agent/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
