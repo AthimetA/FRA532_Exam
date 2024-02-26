@@ -23,32 +23,40 @@ class PMZBRosBridge(Node):
     def __init__(self):
         super().__init__('PMZBRosBridge')
 
+        # Node Name
+        self._name = 'PMZBRosBridge'
+
         # Read config file
         self.project_name = 'pmzbbot_sensors'
         self.project_path = get_package_share_directory(self.project_name)
 
-        with open(os.path.join(self.project_path, 'config', 'pmzb_ros_bridge_config.yaml'), 'r') as file:
+        with open(os.path.join(self.project_path, 'config', 'pmzb_sensor_node_config.yaml'), 'r') as file:
             config = yaml.safe_load(file)
-            self.imu_sub_topic = config['IMU_SUB_TOPIC_NAME']
-            self.imu_pub_topic = config['IMU_PUB_TOPIC_NAME']
-            self.wheel_vel_sub_topic = config['WHEEL_VELOCITY_SUB_TOPIC_NAME']
-            self.wheel_odom_pub_topic = config['WHEEL_ODOMETRY_PUB_TOPIC_NAME']
-            self.timer_period = 1.0 / config['NODE_TIMER_HZ']
 
-            self._WHEEL_RADIUS = config['WHEEL_RADIUS']
-            self._BASE_WIDTH = config['BASE_WIDTH']
+            __SensorGlobal = config['SensorGlobal']
 
-            self.odom_frame_id = config['ODOM_FRAME_ID']
-            self.base_frame_id = config['BASE_FRAME_ID']
-            self.imu_frame_id = config['IMU_FRAME_ID']
+            __PMZBRosBridge = config[self._name]
 
-            # Calibration
-            self.imu_calibration_file_name = config['IMU_CALIBRATION_FILE_NAME']
+            # Sensor Global Parameters
+            self.imu_sub_topic = __SensorGlobal['IMU_TOPIC_NAME']
+            self.wheel_vel_sub_topic = __SensorGlobal['WHEEL_VELOCITY_TOPIC_NAME']
+            self.timer_period = 1.0 / __SensorGlobal['TIMER_FREQUENCY']
+            self.imu_calibration_file_name = __SensorGlobal['IMU_CALIBRATION_FILE']
+
+
+            # PMZBRosBridge Parameters
+            self.imu_pub_topic = __PMZBRosBridge['IMU_PUB_TOPIC_NAME']
+            self.wheel_odom_pub_topic = __PMZBRosBridge['WHEEL_ODOMETRY_PUB_TOPIC_NAME']
+            self._WHEEL_RADIUS = __PMZBRosBridge['WHEEL_RADIUS']
+            self._BASE_WIDTH = __PMZBRosBridge['BASE_WIDTH']
+            self.odom_frame_id = __PMZBRosBridge['ODOM_FRAME_ID']
+            self.base_frame_id = __PMZBRosBridge['BASE_FRAME_ID']
+            self.imu_frame_id = __PMZBRosBridge['IMU_FRAME_ID']
 
         # IMU subscriber
         self.imu_sub = self.create_subscription(Twist, self.imu_sub_topic, self.imu_callback, 10)
         # Load the calibration parameters
-        imu_config_path = os.path.join(self.project_path, 'calibration', self.imu_calibration_file_name)
+        imu_config_path = os.path.join(self.project_path, self.imu_calibration_file_name)
         if os.path.exists(imu_config_path):
             with open(imu_config_path, 'r') as file:
                 imu_calibration = yaml.safe_load(file)

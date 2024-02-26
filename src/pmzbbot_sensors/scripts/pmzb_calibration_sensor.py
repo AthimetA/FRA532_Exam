@@ -17,19 +17,31 @@ class PMZBCalibrationSensor(Node):
     def __init__(self):
         super().__init__('PMZBCalibrationSensor')
 
+        # Node Name
+        self._name = 'PMZBCalibrationSensor'
 
         # Read config file
         self.project_name = 'pmzbbot_sensors'
         self.project_path = get_package_share_directory(self.project_name)
-        self.config_yaml = os.path.join(self.project_path, 'config', 'pmzb_calibration_sensor_config.yaml')
-        self.save_path = os.path.join(self.project_path, 'config')
 
-        with open(self.config_yaml, 'r') as file:
-            self.config = yaml.safe_load(file)
-            self.imu_topic = self.config['IMU_TOPIC_NAME']
-            self.whel_vel_topic = self.config['WHEEL_VELOCITY_TOPIC_NAME']
-            self.max_n = self.config['MAX_CALIBRATION_ITERATIONS']
-            self.node_calibration_srv_name = self.config['NODE_CALIBRATION_SERVICE_NAME']
+        # Config file
+        with open(os.path.join(self.project_path, 'config', 'pmzb_sensor_node_config.yaml'), 'r') as file:
+            config = yaml.safe_load(file)
+
+            __SensorGlobal = config['SensorGlobal']
+
+            __PMZBCalibrationSensor = config[self._name]
+
+            # Sensor Global Parameters
+            self.imu_topic = __SensorGlobal['IMU_TOPIC_NAME']
+            self.whel_vel_topic = __SensorGlobal['WHEEL_VELOCITY_TOPIC_NAME']
+            self.imu_path = os.path.join(self.project_path, __SensorGlobal['IMU_CALIBRATION_FILE'])
+            self.wheel_path = os.path.join(self.project_path, __SensorGlobal['WHEEL_VELOCITY_CALIBRATION_FILE'])
+
+            # PMZBRCalibrationSensor Parameters
+            self.max_n = __PMZBCalibrationSensor['MAX_CALIBRATION_ITERATIONS']
+            self.node_calibration_srv_name = __PMZBCalibrationSensor['NODE_CALIBRATION_SERVICE_NAME']
+        
         
         # IMU subscriber
         self.sensor_subscriber = self.create_subscription(Imu, self.imu_topic, self.imu_callback, 10)
@@ -37,7 +49,6 @@ class PMZBCalibrationSensor(Node):
         self.imu_angular_velocity_list = np.array([])
         self.imu_n = 0
         self.imu_calibration = False
-        self.imu_path = os.path.join(self.save_path, 'imu_calibration.yaml')
 
         # Wheel velocity subscriber
         self.wheel_velocity_subscriber = self.create_subscription(Twist, self.whel_vel_topic, self.wheel_velocity_callback, 10)
@@ -45,10 +56,13 @@ class PMZBCalibrationSensor(Node):
         self.right_wheel_velocity_list = np.array([])
         self.wheel_n = 0
         self.wheel_calibration = False
-        self.wheel_path = os.path.join(self.save_path, 'wheel_calibration.yaml')
         
         # Service
         self.srv = self.create_service(PmzbbotBeginCalibration, self.node_calibration_srv_name , self.begin_calibration_callback)
+
+        self.get_logger().info('PMZBCalibrationSensor node has been started')
+        srv_text ='ros2 service call /pmzbbot_begin_calibration pmzbbot_interfaces/srv/PmzbbotBeginCalibration "{imu_calibration: false, wheel_calibration: false}"'
+        self.get_logger().info(f'Waiting for service call: '+srv_text)
         
     def imu_callback(self,msg: Imu):
         angular_velocity = np.array([msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z])

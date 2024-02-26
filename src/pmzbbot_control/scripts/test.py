@@ -19,7 +19,7 @@ class pmzbbotTestNode(Node):
 
         # Create a publisher to publish the velocity commands
         self.cmd_pub = self.create_publisher(Twist, '/pmzb_cmd_vel', 10)
-        self.hz = 10
+        self.hz = 5
         self.time_period = 1/self.hz
         self.cmd_timer = self.create_timer(self.time_period, self.cmd_timer_callback)
         self.cmd_vel = Twist()
