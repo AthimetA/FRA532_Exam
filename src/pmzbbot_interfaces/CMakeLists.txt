@@ -39,6 +39,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PmzbbotBeginCalibration.srv"
   "srv/PmzbbotSetNodeStaus.srv"
+  "srv/PmzbbotBeginExperiment.srv"
   # DEPENDENCIES std_msgs
   # DEPENDENCIES nav_msgs
 )

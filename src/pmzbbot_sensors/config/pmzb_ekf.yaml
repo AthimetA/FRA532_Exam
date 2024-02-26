@@ -163,8 +163,8 @@ ekf_filter_node:
         imu0: /pmzb/imu
         imu0_config: [false, false, false,   # x y z
                       false, false, false,    # roll pitch yaw
-                      true, true, true,   # vx vy vz
-                      false, false, false,    # vroll vpitch vyaw
+                      false, false, false,   # vx vy vz
+                      true, true, true,    # vroll vpitch vyaw
                       true,  true, true]    # ax ay az
         imu0_nodelay: false
         imu0_differential: false

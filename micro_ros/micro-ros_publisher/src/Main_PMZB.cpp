@@ -182,7 +182,7 @@ void loop() {
 
         // readDynamixelWheel(wheel_left_data, wheel_right_data);
         // readIMU(ax, ay, az, gx, gy, gz);
-        // Serial.println("Left wheel RPM: " + String(left_wheel_rpm) + " Right wheel RPM: " + String(right_wheel_rpm));
+        Serial.println("Left wheel RPM: " + String(left_wheel_rpm) + " Right wheel RPM: " + String(right_wheel_rpm));
 
         // Cap the wheel velocity
         if (left_wheel_rpm > DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP) {
@@ -318,6 +318,10 @@ void cmd_vel_callback(const void * msgin) {
     // Convert wheel velocity to RPM
     left_wheel_rpm = left_wheel_velocity * RAD2RPM;
     right_wheel_rpm = right_wheel_velocity * RAD2RPM;
+
+    // Linear velocity
+    // left_wheel_rpm = (left_wheel_rpm - RPM_LEFT_INTERCEPT) / RPM_LEFT_SLOPE;
+    // right_wheel_rpm = (right_wheel_rpm - RPM_LEFT_INTERCEPT) / RPM_LEFT_SLOPE;
 
     // left_wheel_rpm = msg->linear.x;
     // right_wheel_rpm = msg->angular.z;
