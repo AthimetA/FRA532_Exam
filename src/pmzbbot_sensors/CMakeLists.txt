@@ -30,6 +30,7 @@ install(PROGRAMS
   # Control
   scripts/pmzb_calibration_sensor.py
   scripts/pmzb_ros_bridge.py
+  scripts/testrb.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

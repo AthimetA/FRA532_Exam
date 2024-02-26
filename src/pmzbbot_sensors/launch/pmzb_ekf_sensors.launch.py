@@ -34,7 +34,7 @@ def generate_launch_description():
         executable='ekf_node',
         name='ekf_filter_node',
         parameters=[
-            PathJoinSubstitution([pmzbbot_sensors_dir, 'config', 'pmzb_ekf.yaml']),
+            os.path.join(get_package_share_directory('pmzbbot_description'), 'config', 'pmzb_ekf.yaml'),
         ],
     )
 
@@ -47,7 +47,8 @@ def generate_launch_description():
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='both',
-        parameters=[{'robot_description': robot_description_raw}]
+        parameters=[{'robot_description': robot_description_raw}, 
+                    {'use_sim_time': False}]
     )
 
     # Joint State Publisher Node

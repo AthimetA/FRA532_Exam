@@ -81,6 +81,15 @@ def generate_launch_description():
         parameters=[{'use_sim_time': True}]
     )
 
+    ekf_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        parameters=[
+            os.path.join(get_package_share_directory(description_package_name), 'config', 'pmzb_ekf.yaml'),
+        ],
+    )
+
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
         
@@ -88,6 +97,7 @@ def generate_launch_description():
         gazebo_client,
         node_robot_state_publisher,
         spawn_entity,
+        ekf_node,
 
         RegisterEventHandler(
             OnProcessExit(

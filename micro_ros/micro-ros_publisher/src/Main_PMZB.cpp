@@ -50,6 +50,8 @@ int dynamixel_wheel_left_raw = 0;
 int dynamixel_wheel_right_raw = 0;
 float wheel_left_data = 0;
 float wheel_right_data = 0;
+float left_wheel_rpm = 0;
+float right_wheel_rpm = 0;
 
 // IMU variables
 float ax, ay, az, gx, gy, gz; // Variables for roll, pitch, yaw, acceleration and angular velocity
@@ -77,8 +79,21 @@ void setup() {
     // Serial initialization
     Serial.begin(SERIAL_BAUDRATE);
 
+    // WiFi initialization
+    IPAddress agent_ip(AGENT_IP_0,AGENT_IP_1,AGENT_IP_2,AGENT_IP_3);
+    size_t agent_port = AGENT_PORT;
+
+    char ssid[] = WIFI_SSID;
+    char password[] = WIFI_PASSWORD;
+    set_microros_wifi_transports(ssid,password,agent_ip,agent_port);
+
+    Serial.println("WiFi has been initialized");
+    delay(GENERAL_DELAY_MS);
+
     // Motor initialization
     Motor.begin(DYNAMIXEL_SERIAL_BAUDRATE, DYNAMIXEL_DIRECTION_PIN, &Serial2);
+
+    Serial.println("Dynamixel motor has been initialized");
 
     // MPU9250 sensor initialization
     Wire.begin();
@@ -99,15 +114,7 @@ void setup() {
         }
     }
 
-    // WiFi initialization
-    IPAddress agent_ip(AGENT_IP_0,AGENT_IP_1,AGENT_IP_2,AGENT_IP_3);
-    size_t agent_port = AGENT_PORT;
-
-    char ssid[] = WIFI_SSID;
-    char password[] = WIFI_PASSWORD;
-    set_microros_wifi_transports(ssid,password,agent_ip,agent_port);
-
-    delay(GENERAL_DELAY_MS);
+    Serial.println("MPU has been initialized");
 
     // Ros2 initialization
     allocator = rcl_get_default_allocator();
@@ -154,11 +161,33 @@ void setup() {
 
 void loop() {
     // spin up the executor
+    RCSOFTCHECK(rclc_executor_spin_some(&executor_pub, RCL_MS_TO_NS(10)));
+    RCSOFTCHECK(rclc_executor_spin_some(&executor_sub, RCL_MS_TO_NS(10)));
 
     if (millis() - main_loop_counter_ms >= 50) {
-        // Serial.println("Main loop");
-        RCSOFTCHECK(rclc_executor_spin_some(&executor_pub, RCL_MS_TO_NS(50)));
-        RCSOFTCHECK(rclc_executor_spin_some(&executor_sub, RCL_MS_TO_NS(50)));
+
+
+        Serial.println("Left wheel RPM: " + String(left_wheel_rpm) + " Right wheel RPM: " + String(right_wheel_rpm));
+
+        // Cap the wheel velocity
+        if (left_wheel_rpm > DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP) {
+            left_wheel_rpm = DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP;
+        } else if (left_wheel_rpm < -DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP) {
+            left_wheel_rpm = -DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP;
+        }
+
+        if (left_wheel_rpm < 0) {
+            Motor.turnWheel(DYNAMIXEL_MOTOR_LEFT_ID, RIGHT, abs(left_wheel_rpm));
+        } else {
+            Motor.turnWheel(DYNAMIXEL_MOTOR_LEFT_ID, LEFT, left_wheel_rpm);
+        }
+
+        if (right_wheel_rpm < 0) {
+            Motor.turnWheel(DYNAMIXEL_MOTOR_RIGHT_ID, LEFT, abs(right_wheel_rpm));
+        } else {
+            Motor.turnWheel(DYNAMIXEL_MOTOR_RIGHT_ID, RIGHT, right_wheel_rpm);
+        }
+
         main_loop_counter_ms = millis();
     }
     
@@ -262,30 +291,10 @@ void cmd_vel_callback(const void * msgin) {
     float right_wheel_velocity = (robot_linear_velocity/ROBOT_WHEEL_RADIUS) + (robot_angular_velocity * ROBOT_BASE_WIDTH / (2*ROBOT_WHEEL_RADIUS));
     
     // Convert wheel velocity to RPM
-    float left_wheel_rpm = left_wheel_velocity * RAD2RPM;
-    float right_wheel_rpm = right_wheel_velocity * RAD2RPM;
+    left_wheel_rpm = left_wheel_velocity * RAD2RPM;
+    right_wheel_rpm = right_wheel_velocity * RAD2RPM;
 
-    // float left_wheel_rpm = msg->linear.x;
-    // float right_wheel_rpm = msg->angular.z;
+    // left_wheel_rpm = msg->linear.x;
+    // right_wheel_rpm = msg->angular.z;
 
-    Serial.println("Left wheel RPM: " + String(left_wheel_rpm) + " Right wheel RPM: " + String(right_wheel_rpm));
-
-    // Cap the wheel velocity
-    if (left_wheel_rpm > DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP) {
-        left_wheel_rpm = DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP;
-    } else if (left_wheel_rpm < -DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP) {
-        left_wheel_rpm = -DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP;
-    }
-
-    if (left_wheel_rpm < 0) {
-        Motor.turnWheel(DYNAMIXEL_MOTOR_LEFT_ID, RIGHT, abs(left_wheel_rpm));
-    } else {
-        Motor.turnWheel(DYNAMIXEL_MOTOR_LEFT_ID, LEFT, left_wheel_rpm);
-    }
-
-    if (right_wheel_rpm < 0) {
-        Motor.turnWheel(DYNAMIXEL_MOTOR_RIGHT_ID, LEFT, abs(right_wheel_rpm));
-    } else {
-        Motor.turnWheel(DYNAMIXEL_MOTOR_RIGHT_ID, RIGHT, right_wheel_rpm);
-    }
 }

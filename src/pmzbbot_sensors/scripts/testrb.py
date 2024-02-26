@@ -16,6 +16,7 @@ from tf2_ros import TransformBroadcaster
 from tf2_ros import TransformStamped
 
 from pmzbbot_interfaces.srv import PmzbbotBeginCalibration
+from sensor_msgs.msg import JointState
 
 class PMZBRosBridge(Node):
     def __init__(self):
@@ -92,6 +93,15 @@ class PMZBRosBridge(Node):
         self.imu_msg = Imu()
         self.odom_msg = Odometry()
 
+        self.joint_states_buffer = JointState()
+        # Create a subscriber for the Joint State Publisher
+        self.create_subscription(JointState, '/joint_states', self.joint_states_callback, 10)
+
+    def joint_states_callback(self, msg:JointState):
+        # Create a Twist message to subscribe to the diff drive controller
+        self.joint_states_buffer = msg
+        # self.get_logger().info(f'joint_states: {self.joint_states_buffer}')
+
     def imu_callback(self, msg: Imu):
         imu_msg = Imu()
         imu_msg.header.stamp = self.get_clock().now().to_msg()
@@ -118,11 +128,20 @@ class PMZBRosBridge(Node):
 
 
     def wheel_vel_callback(self, msg: Twist):
+        pass
+
+    def timer_callback(self):
+        self.imu_pub.publish(self.imu_msg)
         now = self.get_clock().now()
 
+        # Create a Float64MultiArray message to publish the velocity commands
         # Get the wheel velocities from the joint_states
-        wl = msg.angular.x # left wheel velocity
-        wr = msg.angular.z # right wheel velocity
+        velocities = np.array(self.joint_states_buffer.velocity).astype(np.float64)
+        self.get_logger().info(f'velocities: {velocities}')
+
+        # Get the wheel velocities from the joint_states
+        wl = velocities[0] # left wheel velocity
+        wr = velocities[1] # right wheel velocity
         dt = 1/10
         # self.get_logger().info(f'wl: {wl}, wr: {wr}')
 
@@ -213,9 +232,6 @@ class PMZBRosBridge(Node):
         # Publish the odometry
         # self.wheel_odom_pub.publish(odom_msg)
         self.odom_msg = odom_msg
-
-    def timer_callback(self):
-        self.imu_pub.publish(self.imu_msg)
         self.wheel_odom_pub.publish(self.odom_msg)
 
     
