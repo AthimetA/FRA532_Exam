@@ -45,7 +45,7 @@ class pmzbbotTestNode(Node):
 
     def cmd_timer_callback(self):
         
-        mode = 2
+        mode = 3
 
         if mode == 1:
             if self.loop_counter < 4:
@@ -77,7 +77,7 @@ class pmzbbotTestNode(Node):
                 self.cmd_vel.angular.z = 0.0
                 self.cmd_pub.publish(self.cmd_vel)
         elif mode ==3:
-            self.cmd_vel.linear.x = 0.0
+            self.cmd_vel.linear.x = 0.1
             self.cmd_vel.angular.z = 0.0
             self.cmd_pub.publish(self.cmd_vel)
 
