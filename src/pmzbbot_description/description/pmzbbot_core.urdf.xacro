@@ -8,9 +8,6 @@
         <xacro:include filename="pmzbbot_common.xacro" />
         <xacro:pmzbbot_common/>
 
-        <xacro:include filename="pmzbbot_ros2control.xacro" />
-        <xacro:pmzbbot_control/>
-
         <!-- BASE LINK -->
 
         <link name="base_link">

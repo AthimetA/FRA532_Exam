@@ -19,7 +19,6 @@ def generate_launch_description():
 
     # ========== **GET PACKAGE SHARE DIRECTORY** ========== #
     pmzbbot_sensors_dir = get_package_share_directory('pmzbbot_sensors')
-    pmzbbot_description_dir = get_package_share_directory('pmzbbot_description')
 
     # Ros2 Bridge Node
     pmzb_ros_bridge_node = Node(
@@ -34,39 +33,8 @@ def generate_launch_description():
         executable='ekf_node',
         name='ekf_filter_node',
         parameters=[
-            os.path.join(get_package_share_directory('pmzbbot_description'), 'config', 'pmzb_ekf.yaml'),
+            os.path.join(pmzbbot_sensors_dir, 'config', 'pmzb_ekf.yaml'),
         ],
-    )
-
-    # Robot Description
-    description_file_subpath = 'description/pmzbbot.urdf.xacro'
-    xacro_file = os.path.join(pmzbbot_description_dir, description_file_subpath) # Use xacro to process the file
-    robot_description_raw = xacro.process_file(xacro_file).toxml()
-    # ROBOT STATE PUBLISHER NODE:
-    node_robot_state_publisher = Node(     # Configure the node
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='both',
-        parameters=[{'robot_description': robot_description_raw}, 
-                    {'use_sim_time': False}]
-    )
-
-    # Joint State Publisher Node
-    joint_state_publisher_node = Node(
-        package='joint_state_publisher',
-        executable='joint_state_publisher',
-        name='joint_state_publisher',
-        output='screen',
-    )
-
-    # Rviz Node
-    rviz_config_file = os.path.join(pmzbbot_sensors_dir, 'config', 'pmzb_rviz2.rviz')
-    rviz_node = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        output='screen',
-        arguments=['-d', rviz_config_file]
     )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
@@ -77,14 +45,5 @@ def generate_launch_description():
 
         # EKF Node
         ekf_node,
-
-        # Robot State Publisher Node
-        node_robot_state_publisher,
-        
-        # Joint State Publisher Node
-        joint_state_publisher_node,
-
-        # Rviz Node
-        rviz_node
 
     ])

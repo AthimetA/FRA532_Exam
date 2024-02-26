@@ -48,7 +48,7 @@ class PMZBRosBridge(Node):
         # IMU subscriber
         self.imu_sub = self.create_subscription(Twist, self.imu_sub_topic, self.imu_callback, 10)
         # Load the calibration parameters
-        imu_config_path = os.path.join(self.project_path, 'config', self.imu_calibration_file_name)
+        imu_config_path = os.path.join(self.project_path, 'calibration', self.imu_calibration_file_name)
         if os.path.exists(imu_config_path):
             with open(imu_config_path, 'r') as file:
                 imu_calibration = yaml.safe_load(file)
@@ -63,8 +63,9 @@ class PMZBRosBridge(Node):
                 # Covariance matrices
                 self.linear_acceleration_cov = np.array(imu_calibration["imu_linear_acceleration_cov"]).reshape(9)
                 self.angular_velocity_cov = np.array(imu_calibration["imu_angular_velocity_cov"]).reshape(9)
+                self.get_logger().info('PMZBRosBridge initialized with IMU calibration data.')
         else:
-            self.get_logger().info('No calibration data found. Running in normal mode.')
+            self.get_logger().info('PMZBRosBridge initialized without IMU calibration data.')
             self.gx_offset = 0.0
             self.gy_offset = 0.0
             self.gz_offset = 0.0
@@ -113,13 +114,6 @@ class PMZBRosBridge(Node):
         # self.get_logger().info(f'rpy: {self.rpy_cal(imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z, imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.z)}')
         self.imu_msg = imu_msg
 
-    def rpy_cal(self, ax, ay, az, gx, gy, gz):
-        roll = np.arctan2(ay, az)
-        pitch = np.arctan2(-ax, np.sqrt(ay**2 + az**2))
-        yaw = np.arctan2(gz, np.sqrt(gx**2 + gy**2))
-        return roll, pitch, yaw
-
-
     def wheel_vel_callback(self, msg: Twist):
         now = self.get_clock().now()
         dt = now - self.time_last
@@ -129,7 +123,7 @@ class PMZBRosBridge(Node):
         # Get the wheel velocities from the joint_states
         wl = msg.angular.x # left wheel velocity
         wr = msg.angular.z # right wheel velocity
-        self.get_logger().info(f'wl: {wl}, wr: {wr}')
+        # self.get_logger().info(f'wl: {wl}, wr: {wr}')
 
         ds = self._WHEEL_RADIUS * (wl + wr) / 2.0 * dt
         dtheta = self._WHEEL_RADIUS * (wr - wl) / self._BASE_WIDTH * dt
@@ -167,10 +161,10 @@ class PMZBRosBridge(Node):
         # ds = vx
         # dtheta = wz
 
-        self.get_logger().info(f'x: {pos0}, y: {pos1}, theta: {pos2}')
+        # self.get_logger().info(f'x: {pos0}, y: {pos1}, theta: {pos2}')
         # Covariance matrix
-        Fp = np.matrix([[1, 0, -ds*np.sin(self.pose[2])], [0, 1, ds*np.cos(self.pose[2])], [0, 0, 1]])
-        Fdrl = np.matrix([[0.5*np.cos(self.pose[2]), 0.5*np.cos(self.pose[2])], [0.5*np.sin(self.pose[2]), 0.5*np.sin(self.pose[2])], [1/self._BASE_WIDTH, -1/self._BASE_WIDTH]])
+        Fp = np.matrix([[1, 0, -ds*np.sin(self.pose[2])], [0, 1, ds*np.cos(self.pose[2])], [0, 0, 1]], dtype=float)
+        Fdrl = np.matrix([[0.5*np.cos(self.pose[2]), 0.5*np.cos(self.pose[2])], [0.5*np.sin(self.pose[2]), 0.5*np.sin(self.pose[2])], [1/self._BASE_WIDTH, -1/self._BASE_WIDTH]], dtype=float)
         self.pose_cov = Fp * self.pose_cov * Fp.T + Fdrl * np.diag([self.linear_acceleration_cov[0], self.linear_acceleration_cov[4]]) * Fdrl.T
 
         # self.get_logger().info(f'pose_cov: {self.pose_cov}')

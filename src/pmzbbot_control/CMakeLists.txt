@@ -38,6 +38,7 @@ install(DIRECTORY
   config
   launch
   scripts
+  rviz2
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()
