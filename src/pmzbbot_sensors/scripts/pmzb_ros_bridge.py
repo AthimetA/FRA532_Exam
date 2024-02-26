@@ -17,6 +17,8 @@ from tf2_ros import TransformStamped
 
 from pmzbbot_interfaces.srv import PmzbbotBeginCalibration
 
+NS_TO_SEC= 1000000000
+
 class PMZBRosBridge(Node):
     def __init__(self):
         super().__init__('PMZBRosBridge')
@@ -91,6 +93,7 @@ class PMZBRosBridge(Node):
         self.create_timer(self.timer_period, self.timer_callback)
         self.imu_msg = Imu()
         self.odom_msg = Odometry()
+        self.time_last = self.get_clock().now()
 
     def imu_callback(self, msg: Imu):
         imu_msg = Imu()
@@ -119,12 +122,14 @@ class PMZBRosBridge(Node):
 
     def wheel_vel_callback(self, msg: Twist):
         now = self.get_clock().now()
-
+        dt = now - self.time_last
+        self.time_last = now
+        dt = dt.nanoseconds / NS_TO_SEC
+        
         # Get the wheel velocities from the joint_states
         wl = msg.angular.x # left wheel velocity
         wr = msg.angular.z # right wheel velocity
-        dt = 1/10
-        # self.get_logger().info(f'wl: {wl}, wr: {wr}')
+        self.get_logger().info(f'wl: {wl}, wr: {wr}')
 
         ds = self._WHEEL_RADIUS * (wl + wr) / 2.0 * dt
         dtheta = self._WHEEL_RADIUS * (wr - wl) / self._BASE_WIDTH * dt
@@ -139,7 +144,6 @@ class PMZBRosBridge(Node):
         pos2 = self.pose[2].item()
 
         # # calculate the linear and angular velocity of the robot
-        # dt = 1/10
         # vx = ((self._WHEEL_RADIUS/2) * (wl + wr) ) * dt
         # wz = ((self._WHEEL_RADIUS/self._BASE_WIDTH) * (wr - wl)) * dt
 

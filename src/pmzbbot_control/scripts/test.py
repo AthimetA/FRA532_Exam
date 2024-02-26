@@ -44,7 +44,9 @@ class pmzbbotTestNode(Node):
         # self.get_logger().info(f'Received IMU data: {self.imu_buffer}')
 
     def cmd_timer_callback(self):
-        mode = 1
+        
+        mode = 2
+
         if mode == 1:
             if self.loop_counter < 4:
                 self.timer_counter += 1
@@ -74,14 +76,13 @@ class pmzbbotTestNode(Node):
                 self.cmd_vel.linear.x = 0.0
                 self.cmd_vel.angular.z = 0.0
                 self.cmd_pub.publish(self.cmd_vel)
-
         elif mode ==3:
-            self.cmd_vel.linear.x = 0.1
+            self.cmd_vel.linear.x = 0.0
             self.cmd_vel.angular.z = 0.0
             self.cmd_pub.publish(self.cmd_vel)
 
 
-
+        self.get_logger().info(f'Published cmd_vel: vx={self.cmd_vel.linear.x}, wz={self.cmd_vel.angular.z}')
 
 
 # Main function to initialize and run the ROS 2 node

@@ -22,7 +22,7 @@ class PMZBCalibrationSensor(Node):
         self.project_name = 'pmzbbot_sensors'
         self.project_path = get_package_share_directory(self.project_name)
         self.config_yaml = os.path.join(self.project_path, 'config', 'pmzb_calibration_sensor_config.yaml')
-        self.save_path = "/home/duplicix/FRA532_Exam/src/pmzbbot_sensors/config/"
+        self.save_path = os.path.join(self.project_path, 'config')
 
         with open(self.config_yaml, 'r') as file:
             self.config = yaml.safe_load(file)

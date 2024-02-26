@@ -176,6 +176,12 @@ void loop() {
             left_wheel_rpm = -DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP;
         }
 
+        if (right_wheel_rpm > DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP) {
+            right_wheel_rpm = DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP;
+        } else if (right_wheel_rpm < -DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP) {
+            right_wheel_rpm = -DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP;
+        }
+
         if (left_wheel_rpm < 0) {
             Motor.turnWheel(DYNAMIXEL_MOTOR_LEFT_ID, RIGHT, abs(left_wheel_rpm));
         } else {
