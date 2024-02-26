@@ -46,7 +46,7 @@ class PMZBRosBridge(Node):
             self.imu_calibration_file_name = config['IMU_CALIBRATION_FILE_NAME']
 
         # IMU subscriber
-        self.imu_sub = self.create_subscription(Twist, self.imu_sub_topic, self.imu_callback, 10)
+        self.imu_sub = self.create_subscription(Imu, self.imu_sub_topic, self.imu_callback, 10)
         # Load the calibration parameters
         imu_config_path = os.path.join(self.project_path, 'config', self.imu_calibration_file_name)
         if os.path.exists(imu_config_path):
@@ -95,19 +95,19 @@ class PMZBRosBridge(Node):
         self.odom_msg = Odometry()
         self.time_last = self.get_clock().now()
 
-    def imu_callback(self, msg: Twist):
+    def imu_callback(self, msg: Imu):
         imu_msg = Imu()
         imu_msg.header.stamp = self.get_clock().now().to_msg()
         imu_msg.header.frame_id = self.imu_frame_id
         # Gyroscope data in rad/s
-        imu_msg.angular_velocity.x = msg.angular.x - self.gx_offset
-        imu_msg.angular_velocity.y = msg.angular.y - self.gy_offset
-        imu_msg.angular_velocity.z = msg.angular.z - self.gz_offset
+        imu_msg.angular_velocity.x = msg.angular_velocity.x - self.gx_offset
+        imu_msg.angular_velocity.y = msg.angular_velocity.y - self.gy_offset
+        imu_msg.angular_velocity.z = msg.angular_velocity.z - self.gz_offset
         imu_msg.angular_velocity_covariance = self.angular_velocity_cov
         # # Accelerometer data in m/s^2
-        imu_msg.linear_acceleration.x = msg.linear.x - self.linear_acceleration_x_offset
-        imu_msg.linear_acceleration.y = msg.linear.y - self.linear_acceleration_y_offset
-        imu_msg.linear_acceleration.z = msg.linear.z - self.linear_acceleration_z_offset
+        imu_msg.linear_acceleration.x = msg.linear_acceleration.x - self.linear_acceleration_x_offset
+        imu_msg.linear_acceleration.y = msg.linear_acceleration.y - self.linear_acceleration_y_offset
+        imu_msg.linear_acceleration.z = msg.linear_acceleration.z - self.linear_acceleration_z_offset
         imu_msg.linear_acceleration_covariance = self.linear_acceleration_cov
         # # Publish the IMU data
         # self.get_logger().info(f'rpy: {self.rpy_cal(imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z, imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.z)}')

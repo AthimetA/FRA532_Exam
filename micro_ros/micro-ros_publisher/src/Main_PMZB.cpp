@@ -19,12 +19,12 @@
 
 // ----------------- Global variables -----------------
 // Ros2
-rclc_executor_t executor_pub; // Executor for publisher
+rclc_executor_t executor_pub_imu; // Executor for IMU publisher
+rclc_executor_t executor_pub_wheel_velocity; // Executor for wheel velocity publisher
 rclc_executor_t executor_sub; // Executor for subscriber
 rclc_support_t support; // Support for micro-ROS
 rcl_allocator_t allocator; // Allocator for micro-ROS
 rcl_node_t node; // Node for micro-ROS
-rcl_timer_t timer; // Timer for control loop
 
 // CMD_VEL Subscriber
 rcl_subscription_t cmd_vel_sub;
@@ -33,10 +33,12 @@ geometry_msgs__msg__Twist cmd_vel_msg;
 // Motor Publisher
 rcl_publisher_t wheel_velocity_publisher; // Publisher for wheel velocity
 geometry_msgs__msg__Twist wheel_velocity_msg; // Message for wheel velocity
+rcl_timer_t timer_wheel_velocity; // Timer for wheel velocity
 
 // IMU Publisher
 rcl_publisher_t imu_publisher; // Publisher for IMU
-sensor_msgs__msg__Imu imu_msg; // Message for IMU
+geometry_msgs__msg__Twist imu_msg; // Message for IMU
+rcl_timer_t timer_imu; // Timer for IMU
 
 // MPU9250 sensor
 MPU9250 mpu; // MPU9250 sensor
@@ -63,7 +65,8 @@ float dt = 0;
 long main_loop_counter_ms = 0;
 
 // ----------------- Function declarations -----------------
-void timer_callback(rcl_timer_t * timer, int64_t last_call_time);
+void timer_imu_callback(rcl_timer_t * timer, int64_t last_call_time);
+void timer_wheel_velocity_callback(rcl_timer_t * timer, int64_t last_call_time);
 void readDynamixelWheel(float &wheel_left_data, float &wheel_right_data);
 void readIMU(float &ax, float &ay, float &az, float &gx, float &gy, float &gz);
 void cmd_vel_callback(const void * msgin);
@@ -110,7 +113,7 @@ void setup() {
     if (!mpu.setup(IMU_ADDRESS,mpu_setting)) { 
         while (1) {
             Serial.println("MPU connection failed. Please check your connection with `connection_check` example.");
-            delay(1000);
+            delay(GENERAL_DELAY_MS);
         }
     }
 
@@ -131,16 +134,24 @@ void setup() {
     RCCHECK(rclc_publisher_init_default(
         &imu_publisher,
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
         IMU_TOPIC_NAME));
 
-    // Timer initialization
-    const unsigned int timer_timeout = TIMER_PERIOD_MS;
+    // Timer initialization for wheel velocity
+    const unsigned int timer_timeout_wheel_velocity = TIMER_PERIOD_MS;
     RCCHECK(rclc_timer_init_default(
-      &timer,
+      &timer_wheel_velocity,
       &support,
-      RCL_MS_TO_NS(timer_timeout),
-      timer_callback));
+      RCL_MS_TO_NS(timer_timeout_wheel_velocity),
+      timer_wheel_velocity_callback));
+
+    // Timer initialization for IMU
+    const unsigned int timer_timeout_imu = TIMER_PERIOD_MS;
+    RCCHECK(rclc_timer_init_default(
+      &timer_imu,
+      &support,
+      RCL_MS_TO_NS(timer_timeout_imu),
+      timer_imu_callback));
 
     // Subscriber initialization
     RCCHECK(rclc_subscription_init_default(
@@ -150,8 +161,10 @@ void setup() {
       DYNAMIXEL_CMD_VEL_TOPIC_NAME));
 
     // Executor initialization
-    RCCHECK(rclc_executor_init(&executor_pub, &support.context, 1, &allocator));
-    RCCHECK(rclc_executor_add_timer(&executor_pub, &timer));
+    RCCHECK(rclc_executor_init(&executor_pub_imu, &support.context, 1, &allocator));
+    RCCHECK(rclc_executor_add_timer(&executor_pub_imu, &timer_imu));
+    RCCHECK(rclc_executor_init(&executor_pub_wheel_velocity, &support.context, 1, &allocator));
+    RCCHECK(rclc_executor_add_timer(&executor_pub_wheel_velocity, &timer_wheel_velocity));
     RCCHECK(rclc_executor_init(&executor_sub, &support.context, 1, &allocator));
     RCCHECK(rclc_executor_add_subscription(&executor_sub,&cmd_vel_sub,&cmd_vel_msg,&cmd_vel_callback, ON_NEW_DATA));
 
@@ -161,13 +174,15 @@ void setup() {
 
 void loop() {
     // spin up the executor
-    RCSOFTCHECK(rclc_executor_spin_some(&executor_pub, RCL_MS_TO_NS(10)));
+    RCSOFTCHECK(rclc_executor_spin_some(&executor_pub_imu, RCL_MS_TO_NS(10)));
+    RCSOFTCHECK(rclc_executor_spin_some(&executor_pub_wheel_velocity, RCL_MS_TO_NS(10)));
     RCSOFTCHECK(rclc_executor_spin_some(&executor_sub, RCL_MS_TO_NS(10)));
 
-    if (millis() - main_loop_counter_ms >= 50) {
+    if (millis() - main_loop_counter_ms >= 100) {
 
-
-        Serial.println("Left wheel RPM: " + String(left_wheel_rpm) + " Right wheel RPM: " + String(right_wheel_rpm));
+        // readDynamixelWheel(wheel_left_data, wheel_right_data);
+        // readIMU(ax, ay, az, gx, gy, gz);
+        // Serial.println("Left wheel RPM: " + String(left_wheel_rpm) + " Right wheel RPM: " + String(right_wheel_rpm));
 
         // Cap the wheel velocity
         if (left_wheel_rpm > DYNAMIXEL_CMD_VEL_WHEEL_CMD_CAP) {
@@ -203,24 +218,8 @@ void loop() {
 
 // ----------------- Function definitions -----------------
 
-// Timer callback
-void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
-    // Get time
-    long currentMilliseconds = millis();
-    dt = (currentMilliseconds - preMilliseconds) / 1000.0;
-    preMilliseconds = currentMilliseconds;
-
-    // IMU sensor
-    readIMU(ax, ay, az, gx, gy, gz);
-    imu_msg.linear_acceleration.x = ax;
-    imu_msg.linear_acceleration.y = ay;
-    imu_msg.linear_acceleration.z = az;
-    imu_msg.angular_velocity.x = gx;
-    imu_msg.angular_velocity.y = gy;
-    imu_msg.angular_velocity.z = gz;
-    // Publish IMU
-    RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
-
+// Timer callback for wheel velocity
+void timer_wheel_velocity_callback(rcl_timer_t * timer, int64_t last_call_time) {
     // Motor Read
     readDynamixelWheel(wheel_left_data, wheel_right_data);
     // Publish wheel velocity
@@ -229,6 +228,23 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
     RCSOFTCHECK(rcl_publish(&wheel_velocity_publisher, &wheel_velocity_msg, NULL));
 
 }
+
+// Timer callback for IMU
+void timer_imu_callback(rcl_timer_t * timer, int64_t last_call_time) {
+
+    // IMU sensor
+    readIMU(ax, ay, az, gx, gy, gz);
+    imu_msg.linear.x = ax;
+    imu_msg.linear.y = ay;
+    imu_msg.linear.z = az;
+    imu_msg.angular.x = gx;
+    imu_msg.angular.y = gy;
+    imu_msg.angular.z = gz;
+    // Publish IMU
+    RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
+
+}
+
 
 // Read motor data
 void readDynamixelWheel(float &wheel_left_data, float &wheel_right_data) {
@@ -282,6 +298,9 @@ void readIMU(float &ax, float &ay, float &az, float &gx, float &gy, float &gz) {
         gz = gz * DEG2RAD;
 
     }
+    else {
+        Serial.println("Failed to read IMU data");
+    }
 }
 
 // CMD_VEL callback
@@ -290,7 +309,7 @@ void cmd_vel_callback(const void * msgin) {
     float robot_linear_velocity = msg->linear.x;
     float robot_angular_velocity = msg->angular.z;
 
-    Serial.println("Robot linear velocity: " + String(robot_linear_velocity) + " m/s"+ " Robot angular velocity: " + String(robot_angular_velocity) + " rad/s");
+    // Serial.println("Robot linear velocity: " + String(robot_linear_velocity) + " m/s"+ " Robot angular velocity: " + String(robot_angular_velocity) + " rad/s");
 
     // Convert robot velocity to wheel velocity
     float left_wheel_velocity = (robot_linear_velocity/ROBOT_WHEEL_RADIUS) - (robot_angular_velocity * ROBOT_BASE_WIDTH / (2*ROBOT_WHEEL_RADIUS));
@@ -302,5 +321,11 @@ void cmd_vel_callback(const void * msgin) {
 
     // left_wheel_rpm = msg->linear.x;
     // right_wheel_rpm = msg->angular.z;
+
+    // Get time
+    long currentMilliseconds = millis();
+    dt = (currentMilliseconds - preMilliseconds) / 1000.0;
+    preMilliseconds = currentMilliseconds;
+    Serial.println("dt: " + String(dt) + " s");
 
 }
