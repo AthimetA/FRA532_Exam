@@ -133,92 +133,79 @@ class PMZBRosBridge(Node):
         wr = msg.angular.z # right wheel velocity
         # self.get_logger().info(f'wl: {wl}, wr: {wr}')
 
-        # ds = self._WHEEL_RADIUS * (wl + wr) / 2.0 * dt
-        # dtheta = self._WHEEL_RADIUS * (wr - wl) / self._BASE_WIDTH * dt
-
-        # # Update the pose
-        # self.pose[2] += dtheta
-        # self.pose[0] += ds * np.cos(self.pose[2])
-        # self.pose[1] += ds * np.sin(self.pose[2])
-        
-        # pos0 = self.pose[0].item()
-        # pos1 = self.pose[1].item()
-        # pos2 = self.pose[2].item()
-
         # calculate the linear and angular velocity of the robot
-        vx = ((self._WHEEL_RADIUS/2) * (wl + wr) ) * dt
-        wz = ((self._WHEEL_RADIUS/self._BASE_WIDTH) * (wr - wl)) * dt
+        vx = ((self._WHEEL_RADIUS/2) * (wl + wr) ) 
+        wz = ((self._WHEEL_RADIUS/self._BASE_WIDTH) * (wr - wl))
 
-        if vx != 0:
-            # calculate distance traveled in x and y
-            x = np.cos(wz) * vx
-            y = -np.sin(wz) * vx
-            # calculate the final position of the robot
-            self.x = self.x + (np.cos(self.wz) * x - np.sin(self.wz) * y)
-            self.y = self.y + (np.sin(self.wz) * x + np.cos(self.wz) * y)
-        if wz != 0:
-            self.wz = self.wz + wz
-
-        self.pose[0] = self.x
-        self.pose[1] = self.y
-        self.pose[2] = self.wz
-
-        pos0 = self.x
-        pos1 = self.y
-        pos2 = self.wz
-        ds = vx
-        dtheta = wz
-
-        self.get_logger().info(f'x: {pos0}, y: {pos1}, theta: {pos2}')
-        # Covariance matrix
-        # Fp = np.matrix([[1, 0, -ds*np.sin(self.pose[2])], [0, 1, ds*np.cos(self.pose[2])], [0, 0, 1]], dtype=float)
-        # Fdrl = np.matrix([[0.5*np.cos(self.pose[2]), 0.5*np.cos(self.pose[2])], [0.5*np.sin(self.pose[2]), 0.5*np.sin(self.pose[2])], [1/self._BASE_WIDTH, -1/self._BASE_WIDTH]], dtype=float)
-        # self.pose_cov = Fp * self.pose_cov * Fp.T + Fdrl * np.diag([self.linear_acceleration_cov[0], self.linear_acceleration_cov[4]]) * Fdrl.T
-
-        # self.get_logger().info(f'pose_cov: {self.pose_cov}')
-
-        # Publish the transform
-        odom_tf = TransformStamped()
-        odom_tf.header.stamp = now.to_msg()
-        odom_tf.header.frame_id = self.odom_frame_id
-        odom_tf.child_frame_id = self.base_frame_id
-        odom_tf.transform.translation.x = pos0
-        odom_tf.transform.translation.y = pos1
-        odom_tf.transform.translation.z = 0.0
-        q = Quaternion()
-        q.x = 0.0
-        q.y = 0.0
-        q.z = np.sin(pos2 / 2)
-        q.w = np.cos(pos2 / 2)
-        odom_tf.transform.rotation = q
-        self.odom_broadcaster.sendTransform(odom_tf)
-
-        # Publish the wheel odometry
+        # Publish the wheel odometry to EKF
         odom_msg = Odometry()
         odom_msg.header.stamp = now.to_msg()
         odom_msg.header.frame_id = self.odom_frame_id
         odom_msg.child_frame_id = self.base_frame_id
-        # Position
-        odom_msg.pose.pose.position.x = self.pose[0].item()
-        odom_msg.pose.pose.position.y = self.pose[1].item()
-        odom_msg.pose.pose.position.z = 0.0
-        # Orientation
-        q = Quaternion()
-        q.x = 0.0
-        q.y = 0.0
-        q.z = np.sin(self.pose[2].item() / 2)
-        q.w = np.cos(self.pose[2].item() / 2)
-        odom_msg.pose.pose.orientation = q
-        # Covariance
-        # odom_msg.pose.covariance[0] = self.pose_cov[0,0]
-        # odom_msg.pose.covariance[7] = self.pose_cov[1,1]
-        # odom_msg.pose.covariance[35] = self.pose_cov[2,2]
         # Velocity
-        odom_msg.twist.twist.linear.x = ds
-        odom_msg.twist.twist.angular.z = dtheta
+        odom_msg.twist.twist.linear.x = vx
+        odom_msg.twist.twist.linear.y = 0.0
+        odom_msg.twist.twist.angular.z = wz
+
+        # Position
+        ds = vx * dt
+        dtheta = wz * dt
+
+        if vx != 0:
+            # calculate distance traveled in x and y
+            x = np.cos(dtheta) * ds
+            y = -np.sin(dtheta) * ds
+            # calculate the final position of the robot
+            self.x += (np.cos(self.wz) * x - np.sin(self.wz) * y)
+            self.y += (np.sin(self.wz) * x + np.cos(self.wz) * y)
+
+        if wz != 0:
+            self.wz += dtheta
+
+        # If want to use pos on ekf
+        odom_msg.pose.pose.position.x = self.x
+        odom_msg.pose.pose.position.y = self.y
+        odom_msg.pose.pose.position.z = 0.0
+
         # Publish the odometry
-        # self.wheel_odom_pub.publish(odom_msg)
         self.odom_msg = odom_msg
+        # self.wheel_odom_pub.publish(odom_msg)
+
+
+        # self.pose[0] = self.x
+        # self.pose[1] = self.y
+        # self.pose[2] = self.wz
+
+        # pos0 = self.x
+        # pos1 = self.y
+        # pos2 = self.wz
+        # ds = vx
+        # dtheta = wz
+
+        # self.get_logger().info(f'x: {pos0}, y: {pos1}, theta: {pos2}')
+        # # Covariance matrix
+        # # Fp = np.matrix([[1, 0, -ds*np.sin(self.pose[2])], [0, 1, ds*np.cos(self.pose[2])], [0, 0, 1]], dtype=float)
+        # # Fdrl = np.matrix([[0.5*np.cos(self.pose[2]), 0.5*np.cos(self.pose[2])], [0.5*np.sin(self.pose[2]), 0.5*np.sin(self.pose[2])], [1/self._BASE_WIDTH, -1/self._BASE_WIDTH]], dtype=float)
+        # # self.pose_cov = Fp * self.pose_cov * Fp.T + Fdrl * np.diag([self.linear_acceleration_cov[0], self.linear_acceleration_cov[4]]) * Fdrl.T
+
+        # # self.get_logger().info(f'pose_cov: {self.pose_cov}')
+
+        # # Publish the transform
+        # odom_tf = TransformStamped()
+        # odom_tf.header.stamp = now.to_msg()
+        # odom_tf.header.frame_id = self.odom_frame_id
+        # odom_tf.child_frame_id = self.base_frame_id
+        # odom_tf.transform.translation.x = pos0
+        # odom_tf.transform.translation.y = pos1
+        # odom_tf.transform.translation.z = 0.0
+        # q = Quaternion()
+        # q.x = 0.0
+        # q.y = 0.0
+        # q.z = np.sin(pos2 / 2)
+        # q.w = np.cos(pos2 / 2)
+        # odom_tf.transform.rotation = q
+        # # self.odom_broadcaster.sendTransform(odom_tf)
+
 
     def timer_callback(self):
         self.imu_pub.publish(self.imu_msg)

@@ -58,6 +58,7 @@ class PMZBExperimentTestNode(Node):
         self._max_n = len(self.total_time_steps)
         self.experiment_id = 0
         self.save_data_list = []
+        self.time_flag = True
 
         srv_text= 'ros2 service call /pmzb_experiment_odom pmzbbot_interfaces/srv/PmzbbotBeginOdomExperiment "{id: 0}"'
         self.get_logger().info(srv_text)
@@ -69,6 +70,7 @@ class PMZBExperimentTestNode(Node):
         self.experiment_id = request.id
         self.begin_experiment = True
         self.hold = 0
+        self.time_flag = True
 
         # Clear the data
         self.save_data_list = []
@@ -87,14 +89,19 @@ class PMZBExperimentTestNode(Node):
         # self.get_logger().info(f'Odometry Filter: {msg.pose.pose.position.x}, {msg.pose.pose.position.y}')
 
     def cmd_timer_callback(self):
-        now = self.get_clock().now()
+        
 
         if self.begin_experiment == True and self.n < self._max_n:
             # self.get_logger().info(f'Published cmd_vel: vx={self.cmd_vel.linear.x}')
 
-            time_now = (now.nanoseconds - self.start_time.nanoseconds) / NS_TO_SEC
-
             if self.hold >= 10:
+                now = self.get_clock().now()
+                if self.time_flag == True:
+                    self.start_time = self.get_clock().now()
+                    self.time_flag = False
+                
+                time_now = (now.nanoseconds - self.start_time.nanoseconds) / NS_TO_SEC
+                
                 self.cmd_vel.linear.x = ROBOT_VEL
                 self.cmd_vel.angular.z = 0.0
                 self.cmd_pub.publish(self.cmd_vel)
@@ -103,7 +110,7 @@ class PMZBExperimentTestNode(Node):
                 self.get_logger().info(f'Data Collected: {self.n}/{self._max_n}')
             else:
                 self.hold += 1
-                self.start_time = self.get_clock().now()
+                
 
         elif self.begin_experiment == True and self.n == self._max_n:
             self.cmd_vel.linear.x = 0.0
