@@ -1,5 +1,5 @@
 SensorGlobal:
-  TIMER_FREQUENCY: 10
+  TIMER_FREQUENCY: 15
   IMU_TOPIC_NAME: "/pmzb_uros/imu"
   WHEEL_VELOCITY_TOPIC_NAME: "/pmzb_uros/wheel_vel"
 

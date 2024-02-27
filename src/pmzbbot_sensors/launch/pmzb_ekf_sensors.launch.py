@@ -35,6 +35,7 @@ def generate_launch_description():
         parameters=[
             os.path.join(pmzbbot_sensors_dir, 'config', 'pmzb_ekf.yaml'),
         ],
+        remappings=[('odometry/filtered', '/pmzb_ros/odometry')]
     )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #

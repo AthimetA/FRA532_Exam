@@ -29,6 +29,7 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/test.py
   scripts/experiment1.py
+  scripts/experiment2.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -40,6 +41,7 @@ install(DIRECTORY
   launch
   scripts
   rviz2
+  experimentresult
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()

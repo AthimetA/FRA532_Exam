@@ -51,8 +51,9 @@ class PMZBExperimentTestNode(Node):
         self.hold = 0
         self._max_n = 250
         self.experiment_id = 0
-        
 
+        srv_text= 'ros2 service call /pmzb_experiment pmzbbot_interfaces/srv/PmzbbotBeginExperiment "{id: 0, target_rpm: 0}"'
+        self.get_logger().info(srv_text)
 
     def wheel_vel_callback(self, msg: Twist):
         self.wheel_vel_buffer = msg
