@@ -122,11 +122,24 @@ class PMZBExperimentTestNode(Node):
 
             # Write to yaml
             # self.get_logger().info(f'Writing to {self.imu_path}')
+            now = self.get_clock().now()
+            time_now = (now.nanoseconds - self.start_time.nanoseconds) / NS_TO_SEC
+            self.save_data_list.append([time_now, self.wheel_odom_buffer.pose.pose.position.x, self.wheel_odom_buffer.pose.pose.position.y, self.odom_filter_buffer.pose.pose.position.x, self.odom_filter_buffer.pose.pose.position.y])
+
             save_data = np.array(self.save_data_list)
             data_frame = pd.DataFrame(save_data, columns=['time', 'wheel_odom_x', 'wheel_odom_y', 'odom_filter_x', 'odom_filter_y'])
-
+            # Add one more time step to the true_x and true_y'
+            data_length = len(self.save_data_list)
+            len_true_x = len(self.true_x)
+            nloop = 1
+            while len_true_x < data_length:
+                self.true_x = np.append(self.true_x, self.true_x[-1] + self.time_period * ROBOT_VEL * nloop)
+                self.true_y = np.append(self.true_y, self.true_y[-1] + 0.0)
+                len_true_x += 1
+                nloop += 1
             data_frame['true_x'] = self.true_x
             data_frame['true_y'] = self.true_y
+
 
             # Create a folder if it doesn't exist
             folder_name =  '/home/athimet/FRA532_Exam/src/pmzbbot_control/experimentresult/experiment2'
