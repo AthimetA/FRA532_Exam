@@ -44,7 +44,7 @@ class PMZBCalibrationSensor(Node):
         
         
         # IMU subscriber
-        self.sensor_subscriber = self.create_subscription(Imu, self.imu_topic, self.imu_callback, 10)
+        self.sensor_subscriber = self.create_subscription(Twist, self.imu_topic, self.imu_callback, 10)
         self.imu_linear_acceleration_list = np.array([])
         self.imu_angular_velocity_list = np.array([])
         self.imu_n = 0
@@ -64,9 +64,9 @@ class PMZBCalibrationSensor(Node):
         srv_text ='ros2 service call /pmzbbot_begin_calibration pmzbbot_interfaces/srv/PmzbbotBeginCalibration "{imu_calibration: false, wheel_calibration: false}"'
         self.get_logger().info(f'Waiting for service call: '+srv_text)
         
-    def imu_callback(self,msg: Imu):
-        angular_velocity = np.array([msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z])
-        linear_acceleration = np.array([msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z])
+    def imu_callback(self,msg: Twist):
+        angular_velocity = np.array([msg.angular.x, msg.angular.y, msg.angular.z])
+        linear_acceleration = np.array([msg.linear.x, msg.linear.y, msg.linear.z])
 
         if self.imu_calibration == True and self.imu_n < self.max_n:
             self.imu_angular_velocity_list = np.append(self.imu_angular_velocity_list, angular_velocity)
