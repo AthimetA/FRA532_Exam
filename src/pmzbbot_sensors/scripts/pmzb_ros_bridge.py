@@ -210,9 +210,9 @@ class PMZBRosBridge(Node):
         q.w = np.cos(self.pose[2].item() / 2)
         odom_msg.pose.pose.orientation = q
         # Covariance
-        odom_msg.pose.covariance[0] = self.pose_cov[0,0]
-        odom_msg.pose.covariance[7] = self.pose_cov[1,1]
-        odom_msg.pose.covariance[35] = self.pose_cov[2,2]
+        # odom_msg.pose.covariance[0] = self.pose_cov[0,0]
+        # odom_msg.pose.covariance[7] = self.pose_cov[1,1]
+        # odom_msg.pose.covariance[35] = self.pose_cov[2,2]
         # Velocity
         odom_msg.twist.twist.linear.x = ds
         odom_msg.twist.twist.angular.z = dtheta
