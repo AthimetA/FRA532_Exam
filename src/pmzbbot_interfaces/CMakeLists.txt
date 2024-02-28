@@ -41,6 +41,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PmzbbotSetNodeStaus.srv"
   "srv/PmzbbotBeginExperiment.srv"
   "srv/PmzbbotBeginOdomExperiment.srv"
+  "srv/PmzbbotBeginOdomEKFExperiment.srv"
   # DEPENDENCIES std_msgs
   # DEPENDENCIES nav_msgs
 )

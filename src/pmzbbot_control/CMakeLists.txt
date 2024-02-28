@@ -30,6 +30,7 @@ install(PROGRAMS
   scripts/test.py
   scripts/experiment1.py
   scripts/experiment2.py
+  scripts/experiment3.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
