@@ -10,6 +10,7 @@ from geometry_msgs.msg import Pose, TransformStamped
 import numpy as np
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
+import sys 
 
 class pmzbbotTestNode(Node):
     # Constructor of the class
@@ -17,9 +18,16 @@ class pmzbbotTestNode(Node):
         # Initialize the ROS 2 node
         super().__init__(node_name='pmzbbotTestNode')
 
+        # Get arg mode
+        # if len(sys.argv) < 2:
+        #     self.mode = 3
+        # else:
+        #     self.mode = int(sys.argv[1])
+        self.mode = 1
+
         # Create a publisher to publish the velocity commands
         self.cmd_pub = self.create_publisher(Twist, '/pmzb_cmd_vel', 10)
-        self.hz = 5
+        self.hz = 10
         self.time_period = 1/self.hz
         self.cmd_timer = self.create_timer(self.time_period, self.cmd_timer_callback)
         self.cmd_vel = Twist()
@@ -47,13 +55,13 @@ class pmzbbotTestNode(Node):
 
     def cmd_timer_callback(self):
         
-        mode = 3
+        mode = self.mode
 
         if mode == 1:
             if self.loop_counter < 4:
                 self.timer_counter += 1
                 if self.timer_counter <= 10/self.time_period:
-                    self.cmd_vel.linear.x = 0.2
+                    self.cmd_vel.linear.x = 2 * self.time_period
                     self.cmd_vel.angular.z = 0.0
                     self.cmd_pub.publish(self.cmd_vel)
                 elif 10/self.time_period < self.timer_counter <= 13/self.time_period:
