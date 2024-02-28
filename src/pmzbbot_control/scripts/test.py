@@ -23,7 +23,7 @@ class pmzbbotTestNode(Node):
         #     self.mode = 3
         # else:
         #     self.mode = int(sys.argv[1])
-        self.mode = 1
+        self.mode = 2
 
         # Create a publisher to publish the velocity commands
         self.cmd_pub = self.create_publisher(Twist, '/pmzb_cmd_vel', 10)
@@ -77,15 +77,20 @@ class pmzbbotTestNode(Node):
                 self.cmd_pub.publish(self.cmd_vel)
 
         elif mode == 2:
-            self.timer_counter += 1
-            if self.timer_counter <= 10/self.time_period:
-                self.cmd_vel.linear.x = 0.1
-                self.cmd_vel.angular.z = 0.0
-                self.cmd_pub.publish(self.cmd_vel)
+            if self.loop_counter < 4:
+                self.timer_counter += 1
+                if self.timer_counter <= 10/self.time_period:
+                    self.cmd_vel.linear.x = (2*np.pi/4)/10
+                    self.cmd_vel.angular.z = -(2*np.pi/4)/10
+                    self.cmd_pub.publish(self.cmd_vel)
+                else:
+                    self.loop_counter += 1
+                    self.timer_counter = 0
             else:
                 self.cmd_vel.linear.x = 0.0
                 self.cmd_vel.angular.z = 0.0
                 self.cmd_pub.publish(self.cmd_vel)
+
         elif mode ==3:
             self.cmd_vel.linear.x = 0.0
             self.cmd_vel.angular.z = 0.0

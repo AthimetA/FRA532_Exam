@@ -220,31 +220,6 @@ void loop() {
     
 }
 
-void testturnWheel(unsigned char ID, bool SIDE, int Speed)
-{		
-		Speed = Speed/0.916;
-        Serial.println("Speed: " + String(Speed));
-		if (SIDE == LEFT)
-		{
-			char Speed_H,Speed_L;
-			Speed_H = Speed >> 8;
-			Speed_L = Speed;                     // 16 bits - 2 x 8 bits variables
-
-            int int_SpeedH = (int)Speed_H;
-            int int_SpeedL = (int)Speed_L;
-
-            Serial.println("Speed_H: " + String(int_SpeedH) + " Speed_L: " + String(int_SpeedL));
-		}
-
-		else
-		{
-			char Speed_H,Speed_L;
-			Speed_H = (Speed >> 8) + 4;
-			Speed_L = Speed;                     // 16 bits - 2 x 8 bits variables
-			
-            Serial.println("Speed_H: " + String(Speed_H) + " Speed_L: " + String(Speed_L));
-		}
-}
 
 // ----------------- End of main code -----------------
 
@@ -359,6 +334,8 @@ void DynamixelCommandVelocity(float &left_wheel_rpm, float &right_wheel_rpm, flo
     // Convert wheel velocity to RPM
     left_wheel_rpm = left_wheel_velocity * RAD2RPM;
     right_wheel_rpm = right_wheel_velocity * RAD2RPM;
+
+    // Serial.println("Left wheel RPM: " + String(left_wheel_rpm) + " Right wheel RPM: " + String(right_wheel_rpm));
 
     // Serial.println("Before linear regression: Left wheel RPM: " + String(left_wheel_rpm) + " Right wheel RPM: " + String(right_wheel_rpm));
 
