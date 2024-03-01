@@ -60,6 +60,21 @@ def generate_launch_description():
                 PathJoinSubstitution(
                     [FindPackageShare('pmzbbot_sensors'), 'launch', 'pmzb_ekf_sensors.launch.py'])),
             )
+    
+
+    # Twist Mux
+    twist_mux_config = os.path.join(
+        get_package_share_directory('pmzbbot_control'),
+        'config',
+        'twist_mux.yaml')
+    
+    twist_mux_node = Node(
+        package='twist_mux',
+        executable='twist_mux',
+        name='twist_mux',
+        parameters=[twist_mux_config],
+        remappings=[('/cmd_vel_out','/cmd_vel')],
+        )
 
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
@@ -76,6 +91,9 @@ def generate_launch_description():
         rviz_node,
 
         # Ros2 Bridge with EKF Launch
-        ros_bridge_with_ekf_launch
+        ros_bridge_with_ekf_launch,
+
+        # Twist Mux
+        twist_mux_node
 
     ])
